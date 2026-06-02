@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DevPath.hub
 
-## Getting Started
+A guided, interactive platform to learn any tech stack from zero — step-by-step
+setup guides with "why this step?" explanations, roadmaps, project walkthroughs,
+a searchable error solver, and tool comparisons.
 
-First, run the development server:
+Built with **Next.js 16** (App Router, React 19), **Tailwind CSS 4**,
+**anime.js 4**, and **Prisma 7 + PostgreSQL**.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app runs with **or without** a database. Without `DATABASE_URL` set, it
+serves bundled content (`lib/content.ts`). With a database configured, it reads
+everything through Prisma (`lib/data.ts`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run dev      # http://localhost:3000 (or the next free port)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Database setup
 
-## Learn More
+The data layer (`lib/data.ts`) reads from Postgres via Prisma when
+`DATABASE_URL` is set, and transparently falls back to bundled content
+otherwise.
 
-To learn more about Next.js, take a look at the following resources:
+### Option A — Hosted Postgres (recommended for reliability)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a free database at [Neon](https://neon.tech) (or any Postgres), then:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# .env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
 
-## Deploy on Vercel
+npm run db:push     # create tables from prisma/schema.prisma
+npm run db:seed     # load the content from lib/content.ts
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Option B — Local Postgres via `prisma dev` (no Docker, no account)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Prisma 7 ships a local Postgres dev server. Note it's a preview tool and can be
+flaky; if connections drop, recreate it with `npx prisma dev rm devpath` then
+the start command below.
+
+```bash
+npm run db:start                 # starts a local server named "devpath"
+npx prisma dev ls                # copy the direct TCP url into .env as DATABASE_URL
+npm run db:push
+npm run db:seed
+npm run dev
+```
+
+### Useful scripts
+
+| Script | What it does |
+| --- | --- |
+| `npm run db:push` | Sync the schema to the database (no migration history) |
+| `npm run db:seed` | Load `lib/content.ts` into the database |
+| `npm run db:studio` | Open Prisma Studio |
+| `npm run db:generate` | Regenerate the Prisma client (`lib/generated/prisma`) |
+
+## Notes for Prisma 7
+
+- The datasource connection lives in `prisma.config.ts`, **not** in
+  `schema.prisma` (Prisma 7 removed `url` from the schema).
+- The client is generated to `lib/generated/prisma` (gitignored) and is
+  imported via `lib/prisma.ts`, which wires up the `@prisma/adapter-pg` driver
+  adapter (Prisma 7 has no Rust engine).
+- To target the spec's **MySQL** in production: change the datasource provider
+  to `mysql`, replace the Postgres-only `String[]` array fields with a join
+  table or JSON, and run a fresh migration.
+
+## Deploy
+
+Deploy on [Vercel](https://vercel.com/new) and set `DATABASE_URL` to a hosted
+Postgres (Neon/Supabase/etc.). Run `db:push` + `db:seed` against it once.

@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode (toggled by `.dark` on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Brand palette */
+  --color-brand-50: #eff4ff;
+  --color-brand-100: #dbe6fe;
+  --color-brand-200: #bfd3fe;
+  --color-brand-300: #93b4fd;
+  --color-brand-400: #608cfa;
+  --color-brand-500: #3b6cf6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4fd7;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+
+  --color-accent-400: #a78bfa;
+  --color-accent-500: #8b5cf6;
+  --color-accent-600: #7c3aed;
+  --color-accent-700: #6d28d9;
+
+  /* Semantic tokens (driven by CSS vars so they flip in dark mode) */
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --animate-float: float 6s ease-in-out infinite;
+}
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --border: #e2e8f0;
+  --foreground: #0f172a;
+  --muted: #64748b;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --background: #0f172a;
+  --surface: #131c30;
+  --surface-2: #0b1322;
+  --border: #1f2c47;
+  --foreground: #f8fafc;
+  --muted: #94a3b8;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Utilities */
+@utility text-gradient {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-brand-600),
+    var(--color-accent-600)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--border) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--border) 70%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* Hide content until the reveal animation runs. Applied at render time (not in
+   an effect) so there's no flash of un-animated content on first paint.
+   Progressive enhancement: if JS never runs, the .no-js fallback keeps
+   everything visible. `data-reveal-group` hides direct children for staggered
+   reveals. */
+[data-reveal],
+[data-reveal-group] > * {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.no-js [data-reveal],
+.no-js [data-reveal-group] > * {
+  opacity: 1;
+}
+
+/* Thin custom scrollbar inside code blocks */
+.code-scroll::-webkit-scrollbar { height: 8px; }
+.code-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
+  border-radius: 9999px;
+}
+
+/* Horizontally-scrollable strips (e.g. the tech tab bar) without a visible
+   scrollbar track or stray vertical scrollbar. */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE/old Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
