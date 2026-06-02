@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Logo } from "./Logo";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -19,6 +20,7 @@ export function Navbar() {
   const { data: session, status } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [confirmOut, setConfirmOut] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -76,7 +78,7 @@ export function Navbar() {
               </span>
               <button
                 type="button"
-                onClick={() => signOut({ redirectTo: "/" })}
+                onClick={() => setConfirmOut(true)}
                 className="rounded-full border border-border px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
               >
                 Sign out
@@ -132,6 +134,18 @@ export function Navbar() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmOut}
+        title="Sign out?"
+        message="You'll need to log in again to track your progress."
+        confirmLabel="Sign out"
+        onCancel={() => setConfirmOut(false)}
+        onConfirm={() => {
+          setConfirmOut(false);
+          signOut({ redirectTo: "/" });
+        }}
+      />
     </header>
   );
 }

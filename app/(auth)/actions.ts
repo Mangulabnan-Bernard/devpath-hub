@@ -18,6 +18,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
+  if (name.length < 2) return { ok: false, error: "Please enter your name." };
   if (!EMAIL_RE.test(email)) return { ok: false, error: "Please enter a valid email address." };
   if (password.length < 8) return { ok: false, error: "Password must be at least 8 characters." };
 
@@ -25,6 +26,6 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
   if (existing) return { ok: false, error: "An account with that email already exists." };
 
   const hashed = await bcrypt.hash(password, 10);
-  await prisma.user.create({ data: { email, name: name || null, password: hashed } });
+  await prisma.user.create({ data: { email, name, password: hashed } });
   return { ok: true };
 }

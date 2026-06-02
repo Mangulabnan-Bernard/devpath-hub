@@ -52,7 +52,7 @@ export function CredentialsForm({ mode }: { mode: "login" | "signup" }) {
         </p>
       )}
       {mode === "signup" && (
-        <input name="name" type="text" placeholder="Name (optional)" className={inputCls} autoComplete="name" />
+        <input name="name" type="text" required placeholder="Name" className={inputCls} autoComplete="name" />
       )}
       <input name="email" type="email" required placeholder="Email" className={inputCls} autoComplete="email" />
       <input
