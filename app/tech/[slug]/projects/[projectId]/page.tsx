@@ -5,6 +5,7 @@ import { getProject, getTechs } from "@/lib/data";
 import { CodeBlock } from "@/components/ui/CodeBlock";
 import { LevelBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
+import { BookmarkButton } from "@/components/tech/BookmarkButton";
 import { Reveal } from "@/components/anim/Reveal";
 
 type Params = { params: Promise<{ slug: string; projectId: string }> };
@@ -53,13 +54,14 @@ export default async function ProjectPage({ params }: Params) {
             <span key={t} className="rounded-md bg-surface-2 px-2 py-0.5 text-xs text-muted ring-1 ring-border">{t}</span>
           ))}
         </div>
-        <div className="flex flex-wrap gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-3 pt-1">
           {project.starterCode && (
             <ButtonLink href={project.starterCode} size="sm">⑂ Fork starter code</ButtonLink>
           )}
           {project.demoUrl && (
             <ButtonLink href={project.demoUrl} variant="outline" size="sm">View live demo ↗</ButtonLink>
           )}
+          <BookmarkButton projectId={project.id} />
         </div>
       </header>
 

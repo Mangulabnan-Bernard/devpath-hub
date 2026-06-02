@@ -1,33 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import type { ChallengeSubmission } from "@/lib/types";
+import { getVoteState, toggleVote } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 
 /**
- * Leaderboard of challenge submissions with optimistic up-voting. Votes are
- * local to the prototype; wiring to the `ChallengeSubmission` model comes later.
+ * Leaderboard of challenge submissions. The seeded `votes` is the base count;
+ * real user votes are persisted in the SubmissionVote table and added on top.
+ * Signed-in users can toggle their vote (optimistic, then persisted).
  */
 export function Submissions({ submissions }: { submissions: ChallengeSubmission[] }) {
-  const [votes, setVotes] = useState<Record<string, number>>(
+  const { status } = useSession();
+  const router = useRouter();
+
+  const base = useMemo(
     () => Object.fromEntries(submissions.map((s) => [s.id, s.votes])),
+    [submissions],
   );
+  const ids = useMemo(() => submissions.map((s) => s.id), [submissions]);
+
+  const [extra, setExtra] = useState<Record<string, number>>({});
   const [voted, setVoted] = useState<Set<string>>(new Set());
 
-  function vote(id: string) {
-    setVotes((prev) => {
-      const has = voted.has(id);
-      return { ...prev, [id]: prev[id] + (has ? -1 : 1) };
+  useEffect(() => {
+    let active = true;
+    getVoteState(ids).then(({ mine, extra }) => {
+      if (!active) return;
+      setExtra(extra);
+      setVoted(new Set(mine));
     });
+    return () => {
+      active = false;
+    };
+  }, [ids, status]);
+
+  function countFor(id: string) {
+    return (base[id] ?? 0) + (extra[id] ?? 0);
+  }
+
+  function vote(id: string) {
+    if (status !== "authenticated") {
+      router.push("/login");
+      return;
+    }
+    const has = voted.has(id);
+    // optimistic
+    setExtra((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + (has ? -1 : 1) }));
     setVoted((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
+      if (has) next.delete(id);
       else next.add(id);
       return next;
     });
+    toggleVote(id);
   }
 
-  const ranked = [...submissions].sort((a, b) => votes[b.id] - votes[a.id]);
+  const ranked = [...submissions].sort((a, b) => countFor(b.id) - countFor(a.id));
 
   return (
     <ul className="flex flex-col gap-3">
@@ -72,7 +103,7 @@ export function Submissions({ submissions }: { submissions: ChallengeSubmission[
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="m18 15-6-6-6 6" />
             </svg>
-            {votes[sub.id]}
+            {countFor(sub.id)}
           </button>
         </li>
       ))}

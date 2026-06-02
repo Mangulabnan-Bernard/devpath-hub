@@ -172,18 +172,30 @@ model Challenge {
 }
 
 model ChallengeSubmission {
-  id          String    @id @default(uuid())
+  id          String           @id @default(uuid())
   challengeId String
-  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challenge   Challenge        @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   userId      String?
-  user        User?     @relation(fields: [userId], references: [id])
+  user        User?            @relation(fields: [userId], references: [id])
   author      String
   avatarColor String
   repoUrl     String
   demoUrl     String?
   blurb       String
-  votes       Int       @default(0)
-  createdAt   DateTime  @default(now())
+  votes       Int              @default(0)
+  createdAt   DateTime         @default(now())
+  submissionVotes SubmissionVote[]
+}
+
+model SubmissionVote {
+  id           String              @id @default(uuid())
+  userId       String
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submissionId String
+  submission   ChallengeSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime            @default(now())
+
+  @@unique([userId, submissionId])
 }
 
 // --- Users & auth (NextAuth.js) — for the upcoming write/auth pass ---------
@@ -203,6 +215,7 @@ model User {
   bookmarks    Bookmark[]
   certificates Certificate[]
   submissions  ChallengeSubmission[]
+  submissionVotes SubmissionVote[]
 }
 
 model Account {
@@ -229,6 +242,14 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 model UserProgress {

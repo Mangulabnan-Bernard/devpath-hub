@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ const LINKS = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -58,18 +60,44 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link
-            href="/login"
-            className="hidden rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground sm:inline-flex"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/signup"
-            className="hidden rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90 sm:inline-flex"
-          >
-            Get started
-          </Link>
+          {status === "authenticated" ? (
+            <div className="hidden items-center gap-2 sm:flex">
+              <Link
+                href="/dashboard"
+                className="rounded-full px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
+              >
+                Dashboard
+              </Link>
+              <span
+                className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-accent-600 text-xs font-bold text-white"
+                title={session.user?.email ?? undefined}
+              >
+                {(session.user?.name ?? session.user?.email ?? "?").slice(0, 1).toUpperCase()}
+              </span>
+              <button
+                type="button"
+                onClick={() => signOut({ redirectTo: "/" })}
+                className="rounded-full border border-border px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="hidden rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground sm:inline-flex"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="hidden rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90 sm:inline-flex"
+              >
+                Get started
+              </Link>
+            </>
+          )}
           <ThemeToggle />
           <button
             type="button"
