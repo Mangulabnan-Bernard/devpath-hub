@@ -1,19 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 /**
  * Toggles the `.dark` class on <html> and persists the choice to localStorage.
- * The initial class is set by the inline script in the root layout (see
- * `ThemeScript`) so there's no flash of the wrong theme on load.
+ * The icon is chosen purely with CSS (`dark:` variants) rather than React state,
+ * so there's no hydration mismatch and no setState-in-effect. The initial class
+ * is set before paint by the inline script in the root layout.
  */
 export function ThemeToggle() {
-  const [dark, setDark] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
-  }, []);
-
   function toggle() {
     const next = !document.documentElement.classList.contains("dark");
     document.documentElement.classList.toggle("dark", next);
@@ -22,7 +15,6 @@ export function ThemeToggle() {
     } catch {
       /* storage may be blocked; ignore */
     }
-    setDark(next);
   }
 
   return (
@@ -32,8 +24,13 @@ export function ThemeToggle() {
       aria-label="Toggle dark mode"
       className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-surface text-foreground transition-colors hover:bg-surface-2"
     >
-      {/* Render nothing until mounted to avoid a hydration mismatch */}
-      {dark === null ? null : dark ? <SunIcon /> : <MoonIcon />}
+      {/* Moon shows in light mode, sun shows in dark mode — chosen via CSS */}
+      <span className="block dark:hidden">
+        <MoonIcon />
+      </span>
+      <span className="hidden dark:block">
+        <SunIcon />
+      </span>
     </button>
   );
 }
