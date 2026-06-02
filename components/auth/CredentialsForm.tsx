@@ -1,20 +1,54 @@
 "use client";
 
-import { useActionState } from "react";
-import { loginAction, signupAction, type AuthState } from "@/app/(auth)/actions";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { signupAction } from "@/app/(auth)/actions";
 
 const inputCls =
   "h-11 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20";
 
 export function CredentialsForm({ mode }: { mode: "login" | "signup" }) {
-  const action = mode === "signup" ? signupAction : loginAction;
-  const [state, formAction, pending] = useActionState<AuthState, FormData>(action, null);
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setPending(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    const password = String(formData.get("password") ?? "");
+
+    // Sign up first (creates the user), then sign in.
+    if (mode === "signup") {
+      const res = await signupAction(formData);
+      if (!res.ok) {
+        setError(res.error);
+        setPending(false);
+        return;
+      }
+    }
+
+    // Client-side sign-in so `useSession` (and the navbar) update immediately.
+    const result = await signIn("credentials", { email, password, redirect: false });
+    if (result?.error) {
+      setError(mode === "signup" ? "Account created — please log in." : "Invalid email or password.");
+      setPending(false);
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
+  }
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
-      {state?.error && (
+    <form onSubmit={onSubmit} className="flex flex-col gap-3">
+      {error && (
         <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400">
-          {state.error}
+          {error}
         </p>
       )}
       {mode === "signup" && (
