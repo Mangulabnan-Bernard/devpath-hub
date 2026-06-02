@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import { animate, stagger, createScope, type Scope } from "animejs";
 import { ButtonLink } from "@/components/ui/Button";
 
+const CMD = "npx create-next-app@latest my-app";
+
 /**
  * Animated landing hero. Uses an anime.js scope so all selectors are bound to
  * this component's root and cleaned up on unmount. The headline animates word
@@ -19,6 +21,8 @@ export function Hero() {
     scope.current = createScope({ root: root.current! }).add(() => {
       if (reduce) {
         animate(".hero-anim, .hero-word", { opacity: 1, duration: 0 });
+        const t = root.current?.querySelector<HTMLElement>(".hero-type");
+        if (t) t.textContent = CMD;
         return;
       }
       animate(".hero-word", {
@@ -45,6 +49,30 @@ export function Hero() {
         delay: stagger(300),
         ease: "inOutSine",
       });
+      // Slow drift on the background glow blobs.
+      animate(".hero-blob", {
+        translateX: [0, 24],
+        translateY: [0, -18],
+        duration: 9000,
+        alternate: true,
+        loop: true,
+        delay: stagger(1500),
+        ease: "inOutSine",
+      });
+      // Typewriter effect for the command line.
+      const typeEl = root.current?.querySelector<HTMLElement>(".hero-type");
+      if (typeEl) {
+        const obj = { i: 0 };
+        animate(obj, {
+          i: CMD.length,
+          duration: 1300,
+          delay: 950,
+          ease: "linear",
+          onUpdate: () => {
+            typeEl.textContent = CMD.slice(0, Math.round(obj.i));
+          },
+        });
+      }
     });
 
     return () => scope.current?.revert();
@@ -57,8 +85,8 @@ export function Hero() {
       {/* Background flourishes */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-grid opacity-40 [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)]" />
-        <div className="absolute -left-24 top-10 size-72 rounded-full bg-brand-500/20 blur-3xl" />
-        <div className="absolute -right-16 top-32 size-80 rounded-full bg-accent-500/20 blur-3xl" />
+        <div className="hero-blob absolute -left-24 top-10 size-72 rounded-full bg-brand-500/20 blur-3xl" />
+        <div className="hero-blob absolute -right-16 top-32 size-80 rounded-full bg-accent-500/20 blur-3xl" />
       </div>
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-28">
@@ -125,7 +153,9 @@ export function Hero() {
                 Create a Next.js app
               </p>
               <div className="mt-2 rounded-lg bg-slate-900 px-3 py-2.5 font-mono text-[13px] text-slate-100">
-                <span className="text-emerald-400">$</span> npx create-next-app@latest my-app
+                <span className="text-emerald-400">$</span>{" "}
+                <span className="hero-type" />
+                <span className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 animate-pulse bg-slate-300" aria-hidden />
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-lg bg-surface-2 p-2.5 ring-1 ring-border">

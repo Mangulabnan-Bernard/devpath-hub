@@ -1,18 +1,20 @@
 import Link from "next/link";
 import { Hero } from "@/components/home/Hero";
 import { Faq } from "@/components/home/Faq";
+import { AnimatedCounter } from "@/components/home/AnimatedCounter";
+import { TechMarquee } from "@/components/home/TechMarquee";
 import { Reveal } from "@/components/anim/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { TechCard } from "@/components/cards/TechCard";
 import { ChallengeCard } from "@/components/cards/ChallengeCard";
 import { ButtonLink } from "@/components/ui/Button";
-import { getFeaturedTechs, getActiveChallenges } from "@/lib/data";
+import { getTechs, getFeaturedTechs, getActiveChallenges } from "@/lib/data";
 
 const STATS = [
-  { value: "50k+", label: "Learners" },
-  { value: "100+", label: "Guides & steps" },
-  { value: "30+", label: "Guided projects" },
-  { value: "0", label: "Assumptions made" },
+  { to: 50, suffix: "k+", label: "Learners" },
+  { to: 100, suffix: "+", label: "Guides & steps" },
+  { to: 30, suffix: "+", label: "Guided projects" },
+  { to: 0, suffix: "", label: "Assumptions made" },
 ];
 
 const STEPS = [
@@ -85,10 +87,18 @@ const COMPARISON = [
 ];
 
 export default async function HomePage() {
-  const [techs, challenges] = await Promise.all([
+  const [allTechs, techs, challenges] = await Promise.all([
+    getTechs(),
     getFeaturedTechs(),
     getActiveChallenges(),
   ]);
+
+  const marqueeItems = allTechs.map((t) => ({
+    slug: t.slug,
+    name: t.name,
+    iconEmoji: t.iconEmoji,
+    color: t.color,
+  }));
 
   return (
     <>
@@ -99,11 +109,23 @@ export default async function HomePage() {
         <Reveal className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-4" stagger from="up">
           {STATS.map((s) => (
             <div key={s.label} className="text-center">
-              <div className="text-3xl font-extrabold text-gradient sm:text-4xl">{s.value}</div>
+              <AnimatedCounter
+                to={s.to}
+                suffix={s.suffix}
+                className="text-3xl font-extrabold text-gradient sm:text-4xl"
+              />
               <div className="mt-1 text-sm text-muted">{s.label}</div>
             </div>
           ))}
         </Reveal>
+      </section>
+
+      {/* Tech marquee / logo cloud */}
+      <section className="border-b border-border py-10">
+        <p className="mb-6 text-center text-sm font-medium uppercase tracking-widest text-muted">
+          Learn the stacks that power the web
+        </p>
+        <TechMarquee items={marqueeItems} />
       </section>
 
       {/* Featured techs */}
