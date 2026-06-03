@@ -8,14 +8,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { TechCard } from "@/components/cards/TechCard";
 import { ChallengeCard } from "@/components/cards/ChallengeCard";
 import { ButtonLink } from "@/components/ui/Button";
-import { getTechs, getFeaturedTechs, getActiveChallenges } from "@/lib/data";
-
-const STATS = [
-  { to: 50, suffix: "k+", label: "Learners" },
-  { to: 100, suffix: "+", label: "Guides & steps" },
-  { to: 30, suffix: "+", label: "Guided projects" },
-  { to: 0, suffix: "", label: "Assumptions made" },
-];
+import { getTechs, getFeaturedTechs, getActiveChallenges, getPlatformStats } from "@/lib/data";
 
 const STEPS = [
   { num: "01", icon: "🧭", title: "Pick your path", body: "Choose a technology and a difficulty level — Beginner, Intermediate, or Advanced." },
@@ -87,10 +80,11 @@ const COMPARISON = [
 ];
 
 export default async function HomePage() {
-  const [allTechs, techs, challenges] = await Promise.all([
+  const [allTechs, techs, challenges, stats] = await Promise.all([
     getTechs(),
     getFeaturedTechs(),
     getActiveChallenges(),
+    getPlatformStats(),
   ]);
 
   const marqueeItems = allTechs.map((t) => ({
@@ -100,9 +94,17 @@ export default async function HomePage() {
     color: t.color,
   }));
 
+  // Real, database-backed stats (no mock numbers).
+  const STATS = [
+    { to: stats.learners, suffix: "", label: "Learners" },
+    { to: stats.lessons, suffix: "+", label: "Lessons" },
+    { to: stats.projects, suffix: "", label: "Guided projects" },
+    { to: stats.errors, suffix: "", label: "Error fixes" },
+  ];
+
   return (
     <>
-      <Hero />
+      <Hero stats={{ lessons: stats.lessons, projects: stats.projects, learners: stats.learners }} />
 
       {/* Stats band */}
       <section className="border-y border-border bg-surface-2">

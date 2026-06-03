@@ -220,6 +220,45 @@ export async function getChallengeBySlug(slug: string): Promise<Challenge | unde
   );
 }
 
+export interface PlatformStats {
+  learners: number;
+  techs: number;
+  lessons: number;
+  projects: number;
+  errors: number;
+  tools: number;
+}
+
+/** Live, platform-wide counts from the database (with content-derived fallback). */
+export async function getPlatformStats(): Promise<PlatformStats> {
+  return withDb(
+    async (db) => {
+      const [learners, techs, roadmapSteps, setupSteps, projects, errors, tools] =
+        await Promise.all([
+          db.user.count(),
+          db.tech.count(),
+          db.roadmapStep.count(),
+          db.setupStep.count(),
+          db.project.count(),
+          db.commonError.count(),
+          db.tool.count(),
+        ]);
+      return { learners, techs, lessons: roadmapSteps + setupSteps, projects, errors, tools };
+    },
+    () => ({
+      learners: 0,
+      techs: techContent.length,
+      lessons: techContent.reduce(
+        (n, t) => n + t.setupGuide.steps.length + t.roadmaps.reduce((m, r) => m + r.steps.length, 0),
+        0,
+      ),
+      projects: techContent.reduce((n, t) => n + t.projects.length, 0),
+      errors: techContent.reduce((n, t) => n + t.errors.length, 0),
+      tools: techContent.reduce((n, t) => n + t.tools.length, 0),
+    }),
+  );
+}
+
 // Slugs for generateStaticParams. These read from bundled content (sync) so the
 // build can enumerate routes without a database round-trip; the DB is the source
 // of truth for the page bodies.

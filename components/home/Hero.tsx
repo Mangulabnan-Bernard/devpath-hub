@@ -11,7 +11,11 @@ const CMD = "npx create-next-app@latest my-app";
  * this component's root and cleaned up on unmount. The headline animates word
  * by word; supporting elements follow on a staggered timeline.
  */
-export function Hero() {
+export function Hero({
+  stats,
+}: {
+  stats?: { lessons: number; projects: number; learners: number };
+}) {
   const root = useRef<HTMLDivElement>(null);
   const scope = useRef<Scope | null>(null);
 
@@ -127,9 +131,9 @@ export function Hero() {
           </div>
 
           <div className="hero-anim mt-10 flex items-center gap-6 opacity-0 text-sm text-muted">
-            <Stat value="100+" label="Guides" />
+            <Stat value={stats ? `${stats.lessons}+` : "100+"} label="Lessons" />
             <span className="h-8 w-px bg-border" />
-            <Stat value="50k+" label="Learners" />
+            <Stat value={stats ? `${stats.projects}` : "20"} label="Projects" />
             <span className="h-8 w-px bg-border" />
             <Stat value="0" label="Assumptions" />
           </div>
